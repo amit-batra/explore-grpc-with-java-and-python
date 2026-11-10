@@ -32,7 +32,7 @@ client/                      # Python gRPC client (uv + grpcio + pytest)
     __main__.py               # demo: prints and asserts each call
     stubs/                    # generated stubs (committed; see "Regenerate")
   tests/
-    test_client.py            # pytest: one test per RPC, asserting expected values
+    test_client.py            # pytest: positive + negative scenarios, each logged
 scripts/
   generate-proto.sh           # regenerate the Python stubs from the .proto
   build-server.sh             # gradle installDist

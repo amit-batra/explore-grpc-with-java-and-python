@@ -19,3 +19,10 @@ dev = [
 # importable to pytest and the demo runner.
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+
+# Show the per-test trace logs (initial state, operation, API response,
+# expected-vs-actual) on the console as the suite runs.
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(message)s"
+log_format = "%(message)s"
