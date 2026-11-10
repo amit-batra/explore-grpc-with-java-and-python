@@ -1,0 +1,77 @@
+plugins {
+    id "java"
+    id "application"
+    id "com.google.protobuf" version "0.10.1"
+}
+
+group = "com.example"
+version = "0.1.0"
+
+repositories {
+    mavenCentral()
+}
+
+def grpcVersion = "1.85.1"
+def protobufVersion = "3.25.5"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+dependencies {
+    implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+    implementation "io.grpc:grpc-stub:${grpcVersion}"
+    implementation "javax.annotation:javax.annotation-api:1.3.2"
+
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.18.2"
+
+    implementation "org.slf4j:slf4j-api:2.0.16"
+    runtimeOnly "org.slf4j:slf4j-simple:2.0.16"
+}
+
+
+// Generate Java message classes and gRPC stubs from the shared proto file. The
+// protobuf-gradle-plugin downloads protoc and the grpc-java plugin itself, so no
+// system-wide protoc install is required.
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:${protobufVersion}"
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.plugins {
+                grpc {
+                    option "java_multiple_files"
+                }
+            }
+        }
+    }
+}
+
+// Put the shared proto/ directory (at the repo root) on the proto source path.
+sourceSets {
+    main {
+        proto {
+            srcDir "${rootDir}/../proto"
+        }
+    }
+}
+
+application {
+    mainClass = "com.example.bookstore.BookStoreApplication"
+}
+
+// installDist produces a launchable distribution (a bin/ launch script plus a
+// lib/ folder of jars) used by the run-server script.
+tasks.named("run") {
+    // Allow overriding the listen port from the environment when run directly.
+    systemProperty "port", System.getenv().getOrDefault("BOOKSTORE_PORT", "50051")
+}

@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+// This proto is the single source of truth for the gRPC Book service. The
+// original OpenAPI 3.1 reference (openapi.yaml) is used only to shape this
+// contract; neither the Java server nor the Python client depends on it at
+// compile or runtime.
+package bookstore;
+
+// Java package used for all generated messages and stubs.
+option java_package = "com.example.bookstore";
+// One generated file per message/service instead of a single class.
+option java_multiple_files = true;
+
+// The Book service. Each RPC maps to one operation in the reference API:
+//   HealthCheck -> GET  /health
+//   ListBooks   -> GET  /books?genre=&page=
+//   CreateBook  -> POST /books
+//   GetBook     -> GET  /books/{id}
+//   DeleteBook  -> DEL  /books/{id}
+service BookService {
+  // Liveness probe.
+  rpc HealthCheck(HealthRequest) returns (HealthResponse);
+
+  // List books, optionally filtered by genre and paginated.
+  rpc ListBooks(ListBooksRequest) returns (ListBooksResponse);
+
+  // Create a book. The server assigns the id.
+  rpc CreateBook(CreateBookRequest) returns (Book);
+
+  // Fetch one book by id.
+  rpc GetBook(GetBookRequest) returns (Book);
+
+  // Delete one book by id.
+  rpc DeleteBook(DeleteBookRequest) returns (DeleteBookResponse);
+}
+
+// The genre of a book. GENRE_UNSPECIFIED is the proto3 default; on the wire it
+// means "no genre supplied", which the server treats as "no filter" for
+// ListBooks and as an empty genre for CreateBook.
+enum Genre {
+  GENRE_UNSPECIFIED = 0;
+  FICTION = 1;
+  NONFICTION = 2;
+  SCI_FI = 3;
+  POETRY = 4;
+}
+
+// A book as stored and returned by the service.
+message Book {
+  int32 id = 1;
+  string title = 2;
+  Genre genre = 3;
+  string author = 4;
+}
+
+// Liveness probe request; the probe ignores its body.
+message HealthRequest {}
+
+// Liveness probe response.
+message HealthResponse {
+  string status = 1;
+}
+
+message ListBooksRequest {
+  // Optional filter; GENRE_UNSPECIFIED returns books of every genre.
+  Genre genre = 1;
+  // 1-based page number; 0 (the proto3 default) is treated as page 1.
+  int32 page = 2;
+}
+
+message ListBooksResponse {
+  repeated Book items = 1;
+  // Total number of books matching the filter (not just this page).
+  int32 total = 2;
+}
+
+// Payload accepted when creating a book. No id field: the server assigns it.
+message CreateBookRequest {
+  string title = 1;
+  Genre genre = 2;
+  string author = 3;
+}
+
+message GetBookRequest {
+  int32 id = 1;
+}
+
+message DeleteBookRequest {
+  int32 id = 1;
+}
+
+// DeleteBook response. `deleted` is true when a book was removed and false when
+// the id did not exist (the client can also detect the latter via NOT_FOUND).
+message DeleteBookResponse {
+  bool deleted = 1;
+}

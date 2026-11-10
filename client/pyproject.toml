@@ -1,0 +1,21 @@
+[project]
+name = "bookstore-client"
+version = "0.1.0"
+description = "Python gRPC client for the Book service, with pytest-based verification against expected values."
+requires-python = ">=3.13"
+dependencies = [
+    "grpcio>=1.85.1",
+]
+
+# `grpcio-tools` (used to generate the stubs from the shared .proto) and `pytest`
+# are dev-only.
+[dependency-groups]
+dev = [
+    "grpcio-tools>=1.85.1",
+    "pytest>=9.0",
+]
+
+# The client is run in place from src/ rather than installed, so make the package
+# importable to pytest and the demo runner.
+[tool.pytest.ini_options]
+pythonpath = ["src"]

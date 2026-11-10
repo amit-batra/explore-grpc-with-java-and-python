@@ -1,0 +1,148 @@
+# explore-grpc-with-java-and-python
+
+A small, self-contained example of client–server communication over **gRPC**:
+
+- a **Java gRPC server** (Gradle + `grpc-netty`) that implements a `Book` service
+  and persists state in a JSON data file, and
+- a **Python gRPC client** (`grpcio`) that calls every RPC and checks the results
+  against expected values with `pytest`.
+
+The service contract lives in a single `.proto` file (`proto/bookstore.proto`).
+That proto was shaped from an OpenAPI 3.1 reference
+(`~/Projects/explore-openapi-with-python/openapi.yaml`), but neither the server
+nor the client has any compile-time or runtime dependency on the OpenAPI
+document — the `.proto` is the sole source of truth.
+
+## Layout
+
+```
+proto/
+  bookstore.proto            # the single source of truth (gRPC contract)
+data/
+  books.json                 # live store data, mutated by the server
+  books.json.seed            # pristine copy of books.json; tests restore this
+server/                      # Java gRPC server (Gradle + grpc-netty)
+  settings.gradle
+  build.gradle
+  src/main/java/com/example/bookstore/
+    BookStoreApplication.java   # main(): bind a port, serve the RPCs
+    BookServiceImpl.java        # implements BookServiceGrpc.BookServiceImplBase
+    BookStoreRepository.java    # JSON-backed, thread-safe store (id = max+1)
+    GenreCodec.java             # Genre enum <-> JSON string ("sci-fi" <-> SCI_FI)
+client/                      # Python gRPC client (uv + grpcio + pytest)
+  pyproject.toml
+  src/bookstore_client/
+    grpc_client.py            # thin channel/stub wrapper
+    __main__.py               # demo: prints and asserts each call
+    stubs/                    # generated stubs (committed; see "Regenerate")
+  tests/
+    test_client.py            # pytest: one test per RPC, asserting expected values
+scripts/
+  generate-proto.sh           # regenerate the Python stubs from the .proto
+  build-server.sh             # gradle installDist
+  run-server.sh               # run the server in the foreground
+  run-client.sh               # run the Python demo against a running server
+  run-tests.sh                # self-contained: seed -> build -> run -> pytest
+Makefile                      # top-level targets (see "Automation")
+```
+
+## The service (from `proto/bookstore.proto`)
+
+| RPC         | Maps to (reference REST) | Notes |
+|-------------|--------------------------|-------|
+| `HealthCheck` | `GET /health`      | returns `status = "ok"` |
+| `ListBooks`   | `GET /books`        | request: optional `genre` + 1-based `page`; response: `items` + `total` (filtered count). Page size is 2. |
+| `CreateBook`  | `POST /books`       | request omits `id`; server assigns `id = max(id)+1` |
+| `GetBook`     | `GET /books/{id}`   | `NOT_FOUND` if missing |
+| `DeleteBook`  | `DEL /books/{id}`   | `NOT_FOUND` if missing; response `deleted = true` |
+
+The `Genre` enum (`FICTION`, `NONFICTION`, `SCI_FI`, `POETRY`) maps to the
+reference's string values (`"sci-fi"` ↔ `SCI_FI`). On the wire,
+`GENRE_UNSPECIFIED` means "no genre supplied", which the server treats as "no
+filter" for `ListBooks` and an empty genre for `CreateBook`.
+
+Validation failures surface as gRPC status codes: `INVALID_ARGUMENT` for a bad
+`page` or an empty `title`, and `NOT_FOUND` for a missing book.
+
+## Prerequisites
+
+- [uv](https://docs.astral.sh/uv/)
+- Java 21+ (a Gradle toolchain will fetch one if needed) and Gradle
+- macOS/Linux; the build is verified on macOS (Apple Silicon)
+
+## Automation
+
+```
+make help     # list targets
+```
+
+| Target   | What it does |
+|----------|--------------|
+| `make proto`   | Regenerate the Python stubs from `proto/bookstore.proto`. |
+| `make setup`   | `uv sync` the client and regenerate the stubs. |
+| `make build`   | Build the Java server distribution (`gradle installDist`). |
+| `make server`  | Run the server in the foreground. |
+| `make client`  | Run the Python demo (assumes a running server). |
+| `make test`    | **Self-contained**: restore the seed, sync, build, start the server, run pytest, stop the server. |
+| `make clean`   | Remove build artifacts and generated stubs. |
+
+Every target maps to a script in `scripts/`; the scripts are usable on their own.
+
+## Quick start
+
+```bash
+make test
+```
+
+`make test` (i.e. `scripts/run-tests.sh`) does the whole flow: it copies
+`data/books.json.seed` back over `data/books.json`, syncs the client, builds the
+server, starts it on port `50051`, waits for the port, runs the pytest suite, and
+stops the server. It is deterministic and leaves the repo in a clean state.
+
+To run the server and client by hand:
+
+```bash
+# Terminal 1:
+make server
+
+# Terminal 2:
+make client
+```
+
+## Regenerate the stubs
+
+```bash
+make proto   # or: bash scripts/generate-proto.sh
+```
+
+The stubs under `client/src/bookstore_client/stubs/` are **committed** so the repo
+builds standalone. Treat them as output: edit `proto/bookstore.proto`, then
+regenerate. The server's Java classes are generated by the
+`protobuf-gradle-plugin` during the build and are not committed.
+
+## Configuration
+
+Environment variables:
+
+| Variable         | Default        | Used by |
+|------------------|----------------|---------|
+| `BOOKSTORE_PORT` | `50051`        | server listen port |
+| `BOOKS_DATA_FILE`| `data/books.json` (relative to CWD) | store file |
+| `GRPC_TARGET`    | `127.0.0.1:50051` | client target |
+
+## Design notes
+
+- **One contract, two languages.** The `.proto` is the single source of truth.
+  `grpcio-tools` (which bundles `protoc`) generates the Python stubs; the
+  `protobuf-gradle-plugin` generates the Java classes. No system-wide `protoc`
+  install is required.
+- **JSON-backed store.** `BookStoreRepository` loads `data/books.json`, performs
+  the operation, and writes the file back, guarding the read-modify-write with a
+  lock so concurrent requests cannot clobber one another.
+- **Idempotent, deterministic tests.** The test harness restores the seed data
+  before running and the demo's create-then-delete leaves the store unchanged, so
+  `data/books.json` is the same after a full run.
+
+## License
+
+MIT
