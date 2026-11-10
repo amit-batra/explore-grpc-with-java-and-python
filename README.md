@@ -81,6 +81,7 @@ make help     # list targets
 | `make client`  | Run the Python demo (assumes a running server). |
 | `make test`    | **Self-contained**: restore the seed, sync, build, start the server, run pytest, stop the server. |
 | `make clean`   | Remove build artifacts and generated stubs. |
+| `make clean-py`| Remove the Python virtual environment (`client/.venv`). |
 
 Every target maps to a script in `scripts/`; the scripts are usable on their own.
 

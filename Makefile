@@ -6,7 +6,7 @@
 
 REPO_ROOT := $(shell pwd)
 
-.PHONY: help proto setup build server client test clean
+.PHONY: help proto setup build server client test clean clean-py
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -35,3 +35,9 @@ clean: ## Remove build artifacts and generated stubs
 	rm -rf client/src/bookstore_client/stubs/bookstore_pb2.py \
 	       client/src/bookstore_client/stubs/bookstore_pb2_grpc.py
 	@echo "cleaned"
+
+# Note: Recreating the Python venv is a costly operation, so avoid
+# running the `clean-py` target unless you absolutely have to
+clean-py: ## Remove the Python virtual environment (client/.venv)
+	rm -rf client/.venv
+	@echo "removed client/.venv"
