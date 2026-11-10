@@ -24,7 +24,7 @@ build: ## Build the Java server distribution
 server: build ## Run the Java gRPC server in the foreground
 	bash scripts/run-server.sh
 
-client: ## Run the Python client demo (assumes a running server)
+client: proto ## Run the Python client demo (regenerates stubs; assumes a running server)
 	bash scripts/run-client.sh
 
 test: ## Self-contained: seed, build, run server, run pytest, stop server

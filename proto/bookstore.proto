@@ -1,9 +1,6 @@
 syntax = "proto3";
 
-// This proto is the single source of truth for the gRPC Book service. The
-// original OpenAPI 3.1 reference (openapi.yaml) is used only to shape this
-// contract; neither the Java server nor the Python client depends on it at
-// compile or runtime.
+// This proto is the single source of truth for the gRPC Book service.
 package bookstore;
 
 // Java package used for all generated messages and stubs.
@@ -11,12 +8,7 @@ option java_package = "com.example.bookstore";
 // One generated file per message/service instead of a single class.
 option java_multiple_files = true;
 
-// The Book service. Each RPC maps to one operation in the reference API:
-//   HealthCheck -> GET  /health
-//   ListBooks   -> GET  /books?genre=&page=
-//   CreateBook  -> POST /books
-//   GetBook     -> GET  /books/{id}
-//   DeleteBook  -> DEL  /books/{id}
+// The Book service.
 service BookService {
   // Liveness probe.
   rpc HealthCheck(HealthRequest) returns (HealthResponse);
@@ -47,10 +39,14 @@ enum Genre {
 
 // A book as stored and returned by the service.
 message Book {
+  // Required; server-assigned and read-only (never set by clients).
   int32 id = 1;
+  // Required.
   string title = 2;
-  Genre genre = 3;
-  string author = 4;
+  // Optional; GENRE_UNSPECIFIED means "no genre".
+  optional Genre genre = 3;
+  // Optional.
+  optional string author = 4;
 }
 
 // Liveness probe request; the probe ignores its body.
@@ -63,9 +59,9 @@ message HealthResponse {
 
 message ListBooksRequest {
   // Optional filter; GENRE_UNSPECIFIED returns books of every genre.
-  Genre genre = 1;
-  // 1-based page number; 0 (the proto3 default) is treated as page 1.
-  int32 page = 2;
+  optional Genre genre = 1;
+  // Optional; 0 (unset) is treated as page 1.
+  optional int32 page = 2;
 }
 
 message ListBooksResponse {
@@ -76,16 +72,21 @@ message ListBooksResponse {
 
 // Payload accepted when creating a book. No id field: the server assigns it.
 message CreateBookRequest {
+  // Required.
   string title = 1;
-  Genre genre = 2;
-  string author = 3;
+  // Optional; GENRE_UNSPECIFIED means "no genre".
+  optional Genre genre = 2;
+  // Optional.
+  optional string author = 3;
 }
 
 message GetBookRequest {
+  // Required.
   int32 id = 1;
 }
 
 message DeleteBookRequest {
+  // Required.
   int32 id = 1;
 }
 

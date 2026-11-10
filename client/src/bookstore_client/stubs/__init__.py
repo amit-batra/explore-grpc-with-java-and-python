@@ -3,8 +3,7 @@
 # own directory is placed on sys.path when the stubs package is first imported.
 #
 # The files in this directory are generated from proto/bookstore.proto by
-# `scripts/generate-proto.sh` and are committed, mirroring the reference
-# project's approach of committing generated code. Do not edit by hand.
+# `scripts/generate-proto.sh` and are committed. Do not edit by hand.
 import os
 import sys
 

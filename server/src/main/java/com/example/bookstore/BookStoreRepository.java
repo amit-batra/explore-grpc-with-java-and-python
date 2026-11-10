@@ -15,8 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 // A tiny file-backed store. State is persisted in a JSON array of book objects
 // (e.g. data/books.json). A ReentrantLock guards each read-modify-write so that
-// concurrent requests cannot overwrite one another, mirroring the reference
-// server's behaviour.
+// concurrent requests cannot overwrite one another.
 public class BookStoreRepository {
 
     private static final int PAGE_SIZE = 2;

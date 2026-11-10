@@ -17,6 +17,10 @@ env/
 # uv
 .uv/
 
+# Generated gRPC Python stubs (regenerate with `make proto`)
+client/src/bookstore_client/stubs/bookstore_pb2.py
+client/src/bookstore_client/stubs/bookstore_pb2_grpc.py
+
 # Test / coverage / type-checking caches
 .pytest_cache/
 .mypy_cache/

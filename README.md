@@ -8,10 +8,6 @@ A small, self-contained example of client–server communication over **gRPC**:
   against expected values with `pytest`.
 
 The service contract lives in a single `.proto` file (`proto/bookstore.proto`).
-That proto was shaped from an OpenAPI 3.1 reference
-(`~/Projects/explore-openapi-with-python/openapi.yaml`), but neither the server
-nor the client has any compile-time or runtime dependency on the OpenAPI
-document — the `.proto` is the sole source of truth.
 
 ## Layout
 
